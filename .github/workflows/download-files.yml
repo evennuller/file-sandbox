@@ -51,17 +51,14 @@ jobs:
           if echo "$MSG" | grep -qi "tool: *curl";  then TOOL="curl"; fi
           if echo "$MSG" | grep -qi "tool: *aria2c"; then TOOL="aria2c"; fi
 
-          # filename: my-file.zip
-          CUSTOM_NAME=$(echo "$MSG" | grep -oiP '(?<=filename:\s)\S+')
+          # FIX: || true prevents grep's exit code 1 (no match) from killing the script under set -e
+          CUSTOM_NAME=$(echo "$MSG" | grep -oiP '(?<=filename:\s)\S+'    || true)
+          CUSTOM_CONN=$(echo "$MSG" | grep -oiP '(?<=connections:\s)\d+' || true)
+          CUSTOM_RET=$(echo "$MSG"  | grep -oiP '(?<=retries:\s)\d+'     || true)
+
           [ -n "$CUSTOM_NAME" ] && FILENAME="$CUSTOM_NAME"
-
-          # connections: 4
-          CUSTOM_CONN=$(echo "$MSG" | grep -oiP '(?<=connections:\s)\d+')
           [ -n "$CUSTOM_CONN" ] && CONNECTIONS="$CUSTOM_CONN"
-
-          # retries: 5
-          CUSTOM_RET=$(echo "$MSG" | grep -oiP '(?<=retries:\s)\d+')
-          [ -n "$CUSTOM_RET" ] && RETRIES="$CUSTOM_RET"
+          [ -n "$CUSTOM_RET"  ] && RETRIES="$CUSTOM_RET"
 
           mkdir -p downloads
 
@@ -81,7 +78,6 @@ jobs:
                 --retry-wait=3 \
                 --auto-file-renaming=false \
                 --continue=true \
-                --console-log-level=error \
                 --dir=downloads"
 
               [ -n "$FILENAME" ]   && CMD="$CMD --out='$FILENAME'"
